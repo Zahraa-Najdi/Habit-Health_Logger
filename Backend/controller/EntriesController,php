@@ -1,0 +1,82 @@
+<?php
+
+require_once(__DIR__ . "../Models/User.php");
+require_once(__DIR__ . "../connection/connection.php");
+require_once(__DIR__ . "../services/ResponseServices.php");
+require_once(__DIR__ . "../services/UserServices.php");
+
+class EntryController
+{
+    private EntryService $entryService;
+
+    public function __construct()
+    {
+        global $connection;
+        $this->entryService = new EntryService($connection);
+    }
+
+    public function getEntries()
+    {
+        $id = $id = isset($_GET["id"]) ? $_GET["id"] : null;
+        $result = $this->centryService->getEntries($id);
+        echo ResponseService::response($result['status'], $result['data']);
+    }
+
+    public function deleteEntry()
+    {
+        $id = $id = isset($_GET["id"]) ? $_GET["id"] : null;
+
+        if (!$id) {
+            echo ResponseService::response(400, ['error' => 'ID is required']);
+            return;
+        }
+
+        $result = $this->entryService->deleteEntry($id);
+        echo ResponseService::response($result['status'], $result['data']);
+    }
+
+    public function createEntry()
+    {
+        $input = json_decode(file_get_contents("php://input"), true);
+
+        if (!$input) {
+            echo ResponseService::response(400, ['error' => 'No data provided']);
+            return;
+        }
+
+        $validErrors = $this->entryService->validateEntryData($input);
+        if (!empty($validErrors)) {
+            echo ResponseService::response(400, ['errors' => $validErrors]);
+            return;
+        }
+
+        $result = $this->entryService->createEntry($input);
+        echo ResponseService::response($result['status'], $result['data']);
+    }
+
+    public function updateEntry()
+    {
+        $id = $_GET['id'] ?? 0;
+        $input = json_decode(file_get_contents("php://input"), true);
+
+        if (!$id) {
+            echo ResponseService::response(400, ['error' => 'ID is required']);
+            return;
+        }
+
+        if (!$input) {
+            echo ResponseService::response(400, ['error' => 'provide data to update']);
+            return;
+        }
+
+        $validErrors = $this->entryService->validateEntryData($input, true);
+        if (!empty($validErrors)) {
+            echo ResponseService::response(400, ['errors' => $validErrors]);
+            return;
+        }
+
+        $result = $this->entryService->updateEntry($id, $input);
+        echo ResponseService::response($result['status'], $result['data']);
+    }
+}
+?>
