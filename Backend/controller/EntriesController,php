@@ -1,11 +1,10 @@
 <?php
 
-require_once(__DIR__ . "../Models/User.php");
-require_once(__DIR__ . "../connection/connection.php");
-require_once(__DIR__ . "../services/ResponseServices.php");
-require_once(__DIR__ . "../services/UserServices.php");
+require_once(__DIR__ . "/../connection/connection.php");
+require_once(__DIR__ . "/../services/ResponseService.php");
+require_once(__DIR__ . "/../services/EntryService.php");
 
-class EntryController
+class EntriesController
 {
     private EntryService $entryService;
 
@@ -17,36 +16,29 @@ class EntryController
 
     public function getEntries()
     {
-        $id = $id = isset($_GET["id"]) ? $_GET["id"] : null;
-        $result = $this->centryService->getEntries($id);
+        $id = isset($_GET["id"]) ? $_GET["id"] : null;
+        $result = $this->entryService->getEntries($id);
         echo ResponseService::response($result['status'], $result['data']);
     }
-
-    public function deleteEntry()
+    public function getEntryById()
     {
-        $id = $id = isset($_GET["id"]) ? $_GET["id"] : null;
+        $id = isset($_GET["id"]) ? $_GET["id"] : null;
 
         if (!$id) {
             echo ResponseService::response(400, ['error' => 'ID is required']);
             return;
         }
 
-        $result = $this->entryService->deleteEntry($id);
+        $result = $this->entryService->getEntryById($id);
         echo ResponseService::response($result['status'], $result['data']);
     }
-
+    
     public function createEntry()
     {
         $input = json_decode(file_get_contents("php://input"), true);
 
         if (!$input) {
             echo ResponseService::response(400, ['error' => 'No data provided']);
-            return;
-        }
-
-        $validErrors = $this->entryService->validateEntryData($input);
-        if (!empty($validErrors)) {
-            echo ResponseService::response(400, ['errors' => $validErrors]);
             return;
         }
 
@@ -65,17 +57,24 @@ class EntryController
         }
 
         if (!$input) {
-            echo ResponseService::response(400, ['error' => 'provide data to update']);
-            return;
-        }
-
-        $validErrors = $this->entryService->validateEntryData($input, true);
-        if (!empty($validErrors)) {
-            echo ResponseService::response(400, ['errors' => $validErrors]);
+            echo ResponseService::response(400, ['error' => 'Provide data to update']);
             return;
         }
 
         $result = $this->entryService->updateEntry($id, $input);
+        echo ResponseService::response($result['status'], $result['data']);
+    }
+
+        public function deleteEntry()
+    {
+        $id = isset($_GET["id"]) ? $_GET["id"] : null;
+
+        if (!$id) {
+            echo ResponseService::response(400, ['error' => 'ID is required']);
+            return;
+        }
+
+        $result = $this->entryService->deleteEntry($id);
         echo ResponseService::response($result['status'], $result['data']);
     }
 }

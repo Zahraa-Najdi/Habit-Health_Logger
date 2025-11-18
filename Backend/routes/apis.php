@@ -1,8 +1,100 @@
 <?php
+
+require_once(__DIR__ . "/../controllers/EntriesController.php");
+require_once(__DIR__ . "/../controllers/UserController.php");
+require_once(__DIR__ . "/../controllers/HabitsController.php");
+
+
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json; charset=UTF-8");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+require_once(__DIR__ . "/../services/ResponseService.php");
 $routes = [
-    '/cars' => ['controller' => 'CarController', 'method' => 'getCars'],
-    '/cars/create' => ['controller' => 'CarController', 'method' => 'createCar'],
-    '/cars/update' => ['controller' => 'CarController', 'method' => 'updateCar'],
-    '/cars/delete' => ['controller' => 'CarController', 'method' => 'deleteCar'],
-    '/users' => ['controller' => 'UserController', 'method' => 'getUsers']
+    "/users" => [
+        "controller" => "UserController",
+        "method" => "getUsers"
+    ],
+    "/users/show" => [
+        "controller" => "UserController",
+        "method" => "getUserById"
+    ],
+    "/users/find" => [
+        "controller" => "UserController",
+        "method" => "getUserByEmail"
+    ],
+    "/users/create" => [
+        "controller" => "UserController",
+        "method" => "createUser"
+    ],
+    "/users/update" => [
+        "controller" => "UserController",
+        "method" => "updateUser"
+    ],
+    "/users/delete" => [
+        "controller" => "UserController",
+        "method" => "deleteUser"
+    ],
+
+    "/habits" => [
+        "controller" => "HabitController",
+        "method" => "getByUser"
+    ],
+    "/habits/show" => [
+        "controller" => "HabitController",
+        "method" => "getById"
+    ],
+    "/habits/create" => [
+        "controller" => "HabitController",
+        "method" => "createHabit"
+    ],
+    "/habits/update" => [
+        "controller" => "HabitController",
+        "method" => "updateHabit"
+    ],
+    "/habits/delete" => [
+        "controller" => "HabitController",
+        "method" => "deleteHabit"
+    ],
+
+    "/entries" => [
+        "controller" => "EntriesController",
+        "method" => "getEntries"
+    ],
+    "/entries/show" => [
+        "controller" => "EntriesController",
+        "method" => "getEntryById"
+    ],
+    "/entries/create" => [
+        "controller" => "EntriesController",
+        "method" => "createEntry"
+    ],
+    "/entries/update" => [
+        "controller" => "EntriesController",
+        "method" => "updateEntry"
+    ],
+    "/entries/delete" => [
+        "controller" => "EntriesController",
+        "method" => "deleteEntry"
+    ],
 ];
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+if (isset($routes[$path])) {
+    $route = $routes[$path];
+    $controllerName = $route['controller'];
+    $methodName = $route['method'];
+
+    require_once(__DIR__ . "/../controllers/{$controllerName}.php");
+
+    $controller = new $controllerName();
+    $controller->$methodName();
+} else {
+    echo ResponseService::response(404, ['error' => 'Endpoint not found']);
+}
+?>

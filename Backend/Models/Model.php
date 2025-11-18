@@ -1,147 +1,108 @@
 <?php
+
 abstract class Model
 {
+    protected static string $table;
+
     public function __construct($data)
     {
     }
 
-    protected static string $table;
-    // protected static string $primary_key = "id";
-
-    //CREATE
+    //Create record
     public static function create(mysqli $connection, array $data)
     {
+        $table = static::$table;
         $columns = implode(", ", array_keys($data));
-        $placeholders = str_repeat("?,", count($data) - 1) . "?";
-
-        $sql = sprintf("INSERT INTO %s (%s) VALUES (%s)", static::$table, $columns, $placeholders);
-        $query = $connection->prepare($sql);
+        $placeholders = implode(", ", array_fill(0, count($data), "?"));
         $types = self::getAllTypes($data);
-        $params = [];
-        foreach ($data as $key => &$value) {
-            $params[] =& $value;
+        $values = array_values($data);
+
+        $stmt = $connection->prepare("INSERT INTO $table ($columns) VALUES ($placeholders)");
+        if (!$stmt) return false;
+
+        $stmt->bind_param($types, ...$values);
+        if ($stmt->execute()) {
+            return $connection->insert_id;
+        } else {
+            if ($connection->errno === 1062) return "Duplicate";
+            return false;
         }
-
-        call_user_func_array(array($query, "bind_param"), array_merge(array($types), $params));
-        $query->execute();
-        if ($connection->errno == 1062)
-            return "Duplicate";
-        return $connection->insert_id;
-
     }
 
-    //UPDATE
-    public static function update(mysqli $connection, int $id, array $data,$primary_key)
+    //Update record by primary key
+    public static function update(mysqli $connection, int $id, array $data, string $primary_key = "id")
     {
-        $updates = "";
-        $i = 0;
-        foreach ($data as $key => &$value) {
-            $updates .= ($i === count($data) - 1) ? "" . $key . "= ?" : "" . $key . "= ?,";
-            $i++;
-        }
-        $sql = sprintf("UPDATE %s SET %s WHERE %s = ?", static::$table, $updates, $primary_key);
-        $query = $connection->prepare($sql);
-        $types = self::getAllTypes($data);
-        $types .= "i";
-        $params = [];
-        foreach ($data as $key => &$value) {
-            $params[] = &$value;
-        }
-        $params[] = &$id;
-        call_user_func_array(array($query, "bind_param"), array_merge(array($types), $params));
-        $query->execute();
-        if($connection->errno ==1062){
-            return "Duplicate";
-        }
-        return $id;
+        $table = static::$table;
+        $set = implode(", ", array_map(fn($k) => "$k = ?", array_keys($data)));
+        $types = self::getAllTypes($data) . "i";
+        $values = array_values($data);
+        $values[] = $id;
+
+        $stmt = $connection->prepare("UPDATE $table SET $set WHERE $primary_key = ?");
+        if (!$stmt) return false;
+
+        $stmt->bind_param($types, ...$values);
+        return $stmt->execute();
     }
 
-    //GET_ALL
+    //Find all records
     public static function findAll(mysqli $connection)
     {
-        $sql = sprintf("SELECT * FROM %s", static::$table);
-
-        $query = $connection->prepare($sql);
-        $query->execute();
-
-        $result = $query->get_result();
+        $table = static::$table;
+        $result = $connection->query("SELECT * FROM $table");
         $objects = [];
-
         while ($row = $result->fetch_assoc()) {
             $objects[] = new static($row);
         }
-
         return $objects;
     }
-    public static function findAllById(mysqli $connection,$id,$primary_key)
+
+    //Find all records by a specific ID (FK)
+    public static function findAllByID(mysqli $connection, $id, string $primary_key)
     {
-        $sql = sprintf("SELECT * FROM %s WHERE %s = ? ", static::$table,$primary_key);
-
-        $query = $connection->prepare($sql);
-        $query->bind_param("i", $id);
-        $query->execute();
-
-        $result = $query->get_result();
+        $table = static::$table;
+        $stmt = $connection->prepare("SELECT * FROM $table WHERE $primary_key = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
         $objects = [];
-
         while ($row = $result->fetch_assoc()) {
             $objects[] = new static($row);
         }
-
         return $objects;
     }
 
-    //GET_BY_ID
-    public static function find(mysqli $connection, int $id,$primary_key)
+    //Find record by PK
+    public static function find(mysqli $connection, $id, string $primary_key = "id")
     {
-        $sql = sprintf(
-            "SELECT * from %s WHERE %s = ?",
-            static::$table,
-            $primary_key
-        );
-
-        $query = $connection->prepare($sql);
-        $query->bind_param("i", $id);
-        $query->execute();
-
-        $data = $query->get_result()->fetch_assoc();
-
-        return $data ? new static($data) : null;
+        $table = static::$table;
+        $stmt = $connection->prepare("SELECT * FROM $table WHERE $primary_key = ? LIMIT 1");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        return $row ? new static($row) : null;
     }
 
-    //DELETE_BY_ID
-    public static function deleteById($id, mysqli $connection,$primary_key)
+    //Delete a record by PK
+    public static function deleteByID(mysqli $connection, $id, string $primary_key = "id")
     {
-        $sql = sprintf("DELETE FROM %s WHERE %s = ?", static::$table, $primary_key);
-        $query = $connection->prepare($sql);
-        $query->bind_param("i", $id);
-        $query->execute();
-        return true;
+        $table = static::$table;
+        $stmt = $connection->prepare("DELETE FROM $table WHERE $primary_key = ?");
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
     }
 
-
-    public static function getAllTypes($data)
+    //Get parameter types for bind_param
+    protected static function getAllTypes(array $data)
     {
-        $types = "";
-        foreach ($data as $key => $value) {
-            if (gettype($value) == "string") {
-                $types .= "s";
-            } elseif (gettype($value) == "integer") {
-                $types .= "i";
-            } elseif (gettype($value) == "float" || gettype($value) == "double") {
-                $types .= "d";
-            }
+        $types = '';
+        foreach ($data as $value) {
+            if (is_int($value)) $types .= 'i';
+            elseif (is_float($value)) $types .= 'd';
+            else $types .= 's';
         }
-
         return $types;
     }
-
-
-
-    //use past tense for commits
-    //add backend -> or frontend -> 
-
 }
-
-
 ?>
