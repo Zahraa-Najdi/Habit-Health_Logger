@@ -3,7 +3,6 @@ require_once(__DIR__ . "/../services/UserService.php");
 require_once(__DIR__ . "/../services/ResponseService.php");
 require_once(__DIR__ . "/../Models/User.php");
 require_once(__DIR__ . "/../connection/connection.php");
-//require_once(__DIR__ . "/../services/ValidationService.php");
 
 class UserController
 {
@@ -14,16 +13,16 @@ class UserController
         $this->userService = new UserService($connection);
     }
 
-    //Get all users or a specific user by ID
+
     public function getUsers()
     {
-        $id = $_GET['id'] ?? null;
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
         $result = $this->userService->getUsers($id);
         echo ResponseService::response($result['status'], $result['data']);
     }
-    
-    //Get user by ID
+
+ 
     public function getUserById()
     {
         $id = $_GET['id'] ?? null;
@@ -33,11 +32,12 @@ class UserController
             return;
         }
 
+        $id = (int)$id;
         $result = $this->userService->getUserById($id);
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    //Get user by email and password
+
     public function getUserByEmail()
     {
         $data = json_decode(file_get_contents("php://input"), true);
@@ -51,7 +51,7 @@ class UserController
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    //Create a new user
+
     public function createUser()
     {
         $data = json_decode(file_get_contents("php://input"), true);
@@ -65,7 +65,7 @@ class UserController
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    //Update a user
+ 
     public function updateUser()
     {
         $id = $_GET['id'] ?? null;
@@ -81,11 +81,12 @@ class UserController
             return;
         }
 
+        $id = (int)$id;
         $result = $this->userService->updateUser($id, $data);
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    //Delete a user
+ 
     public function deleteUser()
     {
         $id = $_GET['id'] ?? null;
@@ -95,6 +96,7 @@ class UserController
             return;
         }
 
+        $id = (int)$id;
         $result = $this->userService->deleteUser($id);
         echo ResponseService::response($result['status'], $result['data']);
     }

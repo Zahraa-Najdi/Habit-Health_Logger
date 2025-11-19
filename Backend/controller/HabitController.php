@@ -16,7 +16,6 @@ class HabitController
 
 
 
-    //Get all habits for a user
     public function getByUser()
     {
         $userID = $_GET['user_id'] ?? null;
@@ -30,7 +29,6 @@ class HabitController
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    //Get habit by ID
     public function getById()
     {
         $id = $_GET['id'] ?? null;
@@ -44,7 +42,6 @@ class HabitController
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    //Create a new habit
     public function createHabit()
     {
         $data = json_decode(file_get_contents("php://input"), true);
@@ -58,7 +55,6 @@ class HabitController
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    //Update a habit
     public function updateHabit()
     {
         $id = $_GET['id'] ?? null;
@@ -78,7 +74,6 @@ class HabitController
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    //Delete a habit
     public function deleteHabit()
     {
         $id = $_GET['id'] ?? null;

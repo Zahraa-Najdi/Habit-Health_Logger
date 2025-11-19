@@ -104,5 +104,23 @@ abstract class Model
         }
         return $types;
     }
+
+
+    public static function findByEmail(mysqli $connection, string $email)
+    {
+        $table = static::$table;
+
+        $stmt = $connection->prepare("SELECT * FROM $table WHERE email = ? LIMIT 1");
+        if (!$stmt) return null;
+
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        return $row ? new static($row) : null;
+    }
+
 }
 ?>

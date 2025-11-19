@@ -9,7 +9,7 @@ class Habit extends Model
     private string $name;
     private $target_value;
     private ?string $unit;
-    private int $is_predefined; // 0 or 1
+    private int $is_predefined; 
     private ?string $rules;
     private bool $is_active;
     private string $created_at;
@@ -28,26 +28,6 @@ class Habit extends Model
         $this->is_active = (bool)$data["is_active"];
         $this->created_at = $data["created_at"];
     }
-
-    public function getId(): int { return $this->id; }
-    public function getUserId(): int { return $this->user_id; }
-    public function getName(): string { return $this->name; }
-    public function getTargetValue() { return $this->target_value; }
-    public function getUnit(): ?string { return $this->unit; }
-    public function getIsPredefined(): int { return $this->is_predefined; }
-    public function getRules(): ?string { return $this->rules; }
-    public function isActive(): bool { return $this->is_active; }
-    public function getCreatedAt(): string { return $this->created_at; }
-
-    public function setId(int $id): self { $this->id = $id; return $this; }
-    public function setUserId(int $user_id): self { $this->user_id = $user_id; return $this; }
-    public function setName(string $name): self { $this->name = $name; return $this; }
-    public function setTargetValue($value): self { $this->target_value = $value; return $this; }
-    public function setUnit(?string $unit): self { $this->unit = $unit; return $this; }
-    public function setIsPredefined(int $is_predefined): self { $this->is_predefined = $is_predefined; return $this; }
-    public function setRules(?string $rules): self { $this->rules = $rules; return $this; }
-    public function setIsActive(bool $active): self { $this->is_active = $active; return $this; }
-    public function setCreatedAt(string $created_at): self { $this->created_at = $created_at; return $this; }
 
     public function __toString()
     {
@@ -68,5 +48,43 @@ class Habit extends Model
             "created_at" => $this->created_at
         ];
     }
+
+    public static function findByEntry(mysqli $connection, int $entryId): array
+    {
+        $stmt = $connection->prepare("SELECT * FROM habit_entries WHERE entry_id = ?");
+        $stmt->bind_param("i", $entryId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $habits = [];
+        while ($row = $result->fetch_assoc()) {
+            $habits[] = $row;
+        }
+        $stmt->close();
+        return $habits;
+    }
+
+    public static function updateOrCreate(mysqli $connection, int $entryId, int $habitId, $value, int $userId): void
+    {
+    
+        $stmt = $connection->prepare("SELECT id FROM habit_entries WHERE entry_id = ? AND habit_id = ?");
+        $stmt->bind_param("ii", $entryId, $habitId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        if ($row) {
+            $stmtUpdate = $connection->prepare("UPDATE habit_entries SET value = ?, user_id = ? WHERE id = ?");
+            $stmtUpdate->bind_param("dii", $value, $userId, $row['id']);
+            $stmtUpdate->execute();
+            $stmtUpdate->close();
+        } else {
+            $stmtInsert = $connection->prepare("INSERT INTO habit_entries (entry_id, habit_id, value, user_id) VALUES (?, ?, ?, ?)");
+            $stmtInsert->bind_param("iidi", $entryId, $habitId, $value, $userId);
+            $stmtInsert->execute();
+            $stmtInsert->close();
+        }
+}
+
 }
 ?>

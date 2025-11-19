@@ -12,7 +12,6 @@ class EntryService
         $this->connection = $connection;
     }
 
-    // Create a new entry with free-text, parsed JSON, and structured habits
     public function createEntry(array $data, array $habitValues = []): array
     {
         if (empty($data["user_id"]) || empty($data["entry_date"])) {
@@ -29,27 +28,64 @@ class EntryService
         }
 
         foreach ($habitValues as $habitId => $value) {
-            Habit::create($this->connection, [
-                "entry_id" => $entryId,
-                "habit_id" => $habitId,
-                "value" => $value
-            ]);
+            Habit::updateOrCreate($this->connection, $entryId, $habitId, $value, $data["user_id"]);
         }
 
         return ["status" => 201, "data" => ["entry_id" => $entryId]];
     }
 
-    // Fetch entries for a user (optionally by date range)
-    public function getEntries(int $userId, ?string $startDate = null, ?string $endDate = null): array
+    public function getEntries(?int $userId = null, ?string $startDate = null, ?string $endDate = null): array
     {
-        $entries = Entry::findByUser($this->connection, $userId, $startDate, $endDate);
-        foreach ($entries as &$entry) {
-            $entry["habits"] = Habit::findByEntry($this->connection, $entry["id"]);
-        }
-        return ["status" => 200, "data" => $entries];
+        $entries = $userId 
+            ? Entry::findByUser($this->connection, $userId, $startDate, $endDate)
+            : Entry::findAll($this->connection, $startDate, $endDate);
+
+        $entriesArray = array_map(function($entry) {
+            $arr = $entry->toArray();
+            $arr["habits"] = Habit::findByEntry($this->connection, $entry->getId());
+            return $arr;
+        }, $entries);
+
+        return ["status" => 200, "data" => $entriesArray];
     }
 
-    // Delete an entry and its habit values
+    public function getEntryById(int $entryId): array
+    {
+        $entry = Entry::find($this->connection, $entryId);
+        if (!$entry) {
+            return ["status" => 404, "data" => ["error" => "Entry not found"]];
+        }
+
+        $entryArray = $entry->toArray();
+        $entryArray["habits"] = Habit::findByEntry($this->connection, $entry->getId());
+
+        return ["status" => 200, "data" => $entryArray];
+    }
+
+    public function updateEntry(int $entryId, array $data): array
+    {
+        $entry = Entry::find($this->connection, $entryId);
+        if (!$entry) {
+            return ["status" => 404, "data" => ["error" => "Entry not found"]];
+        }
+
+        if (isset($data['parsed_json']) && is_array($data['parsed_json'])) {
+            $data['parsed_json'] = json_encode($data['parsed_json']);
+        }
+
+        $habits = $data['habits'] ?? [];
+        unset($data['habits']);
+
+        Entry::update($this->connection, $entryId, $data);
+
+        $userId = $entry->getUserId(); 
+        foreach ($habits as $habitId => $value) {
+            Habit::updateOrCreate($this->connection, $entryId, $habitId, $value, $userId);
+        }
+
+        return ["status" => 200, "data" => ["message" => "Entry updated successfully"]];
+    }
+
     public function deleteEntry(int $entryId): array
     {
         $entry = Entry::find($this->connection, $entryId);

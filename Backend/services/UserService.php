@@ -11,7 +11,6 @@ class UserService
         $this->connection = $connection;
     }
 
-    // Fetch all users or a single user by ID
     public function getUsers($id = null): array
     {
         if ($id) {
@@ -26,7 +25,11 @@ class UserService
         return ["status" => 200, "data" => array_map(fn($user) => $user->toArray(), $users)];
     }
 
-    // Fetch a user by email and password
+    public function getUserById(int $id): array
+    {
+        return $this->getUsers($id);
+    }
+
     public function getUserByEmail(string $email, string $password): array
     {
         $user = User::findByEmail($this->connection, $email);
@@ -36,7 +39,6 @@ class UserService
         return ["status" => 200, "data" => $user->toArray()];
     }
 
-    // Create a new user
     public function createUser(array $data): array
     {
         if (empty($data["email"]) || empty($data["password"])) {
@@ -55,7 +57,45 @@ class UserService
             return ["status" => 500, "data" => ["error" => "Failed to create user"]];
         }
 
-        return ["status" => 201, "data" => ["user_id" => $userId]];
+        return ["status" => 201, "data" => User::find($this->connection, $userId)->toArray()];
+    }
+
+
+    public function updateUser(int $id, array $data): array
+    {
+        $user = User::find($this->connection, $id);
+        if (!$user) {
+            return ["status" => 404, "data" => ["error" => "User not found"]];
+        }
+
+  
+        if (isset($data['password'])) {
+            $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+        }
+
+        $success = User::update($this->connection, $id, $data);
+        if (!$success) {
+            return ["status" => 500, "data" => ["error" => "Failed to update user"]];
+        }
+
+        $updatedUser = User::find($this->connection, $id);
+        return ["status" => 200, "data" => $updatedUser->toArray()];
+    }
+
+  
+    public function deleteUser(int $id): array
+    {
+        $user = User::find($this->connection, $id);
+        if (!$user) {
+            return ["status" => 404, "data" => ["error" => "User not found"]];
+        }
+
+        $success = User::deleteByID($this->connection, $id);
+        if (!$success) {
+            return ["status" => 500, "data" => ["error" => "Failed to delete user"]];
+        }
+
+        return ["status" => 200, "data" => ["message" => "User deleted successfully"]];
     }
 }
 ?>

@@ -24,6 +24,22 @@ class Entry extends Model
         $this->created_at = $data["created_at"] ?? null;
     }
 
+    public static function findByUserAndDate(mysqli $connection, int $userId, string $entryDate): ?Entry
+    {
+        $stmt = $connection->prepare("SELECT * FROM entries WHERE user_id = ? AND entry_date = ?");
+        $stmt->bind_param("is", $userId, $entryDate);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = $result->fetch_assoc();
+        $stmt->close();
+
+        if ($data) {
+            return new Entry($data); 
+        }
+
+        return null;
+    }
+
     
     public function getId(): int { return $this->id; }
     public function getUserId(): int { return $this->user_id; }
