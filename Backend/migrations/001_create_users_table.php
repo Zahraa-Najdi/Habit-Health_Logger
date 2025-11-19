@@ -8,8 +8,8 @@ $sql = "CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     role ENUM('user','admin') DEFAULT 'user',
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    rules TEXT DEFAULT NULL, --'rules' column
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `rules` TEXT DEFAULT NULL
 )";
 
 if (mysqli_query($connection, $sql)) {

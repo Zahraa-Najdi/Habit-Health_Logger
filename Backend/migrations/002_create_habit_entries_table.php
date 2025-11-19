@@ -8,12 +8,12 @@ $sql = "CREATE TABLE IF NOT EXISTS habit_entries (
     habit_name VARCHAR(100) NOT NULL,
     value FLOAT DEFAULT NULL,
     unit VARCHAR(50) DEFAULT NULL,
-    is_predefined BOOLEAN DEFAULT FALSE
+    is_predefined BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    rules TEXT DEFAULT NULL, --'rules' column
+    `rules` TEXT DEFAULT NULL,
 
     FOREIGN KEY (entry_id) REFERENCES entries(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )";
 
 if (mysqli_query($connection, $sql)) {
