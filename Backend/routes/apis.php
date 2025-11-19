@@ -1,6 +1,7 @@
 <?php
 
-require_once(__DIR__ . "/../services/ResponseService.php");
+require_once(__DIR__ . "/../connection/connection.php");
+//require_once(__DIR__ . "/../services/ResponseService.php");
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -12,9 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-
 $routes = [
-
     "/users" => ["controller" => "UserController", "method" => "getUsers"],
     "/users/show" => ["controller" => "UserController", "method" => "getUserById"],
     "/users/find" => ["controller" => "UserController", "method" => "getUserByEmail"],
@@ -35,9 +34,7 @@ $routes = [
     "/entries/delete" => ["controller" => "EntriesController", "method" => "deleteEntry"],
 ];
 
-
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
 
 if (isset($routes[$path])) {
     $route = $routes[$path];
@@ -46,7 +43,7 @@ if (isset($routes[$path])) {
 
     require_once(__DIR__ . "/../controllers/{$controllerName}.php");
 
-    global $connection; 
+    global $connection;
     $controller = new $controllerName($connection);
     $controller->$methodName();
 } else {
