@@ -7,10 +7,10 @@ $sql = "CREATE TABLE IF NOT EXISTS entries (
     entry_date DATE NOT NULL,
     free_text TEXT DEFAULT NULL, --Added for free-text input
     parsed_json JSON DEFAULT NULL, --Added for AI-parsed data
-    rules TEXT DEFAULT NULL, --'rules' column
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    rules TEXT DEFAULT NULL, --'rules' column
+
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX(user_id),
     UNIQUE KEY unique_user_date (user_id, entry_date)
 )";
 
