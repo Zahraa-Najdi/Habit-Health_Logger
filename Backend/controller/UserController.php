@@ -1,6 +1,9 @@
 <?php
 require_once(__DIR__ . "/../services/UserService.php");
 require_once(__DIR__ . "/../services/ResponseService.php");
+require_once(__DIR__ . "/../Models/User.php");
+require_once(__DIR__ . "/../connection/connection.php");
+//require_once(__DIR__ . "/../services/ValidationService.php");
 
 class UserController
 {
@@ -34,7 +37,7 @@ class UserController
         echo ResponseService::response($result['status'], $result['data']);
     }
 
-    // Get user by email and password
+    //Get user by email and password
     public function getUserByEmail()
     {
         $data = json_decode(file_get_contents("php://input"), true);

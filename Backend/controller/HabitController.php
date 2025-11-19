@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../services/HabitService.php';
 require_once __DIR__ . '/../services/ResponseService.php';
+require_once(__DIR__ . "/../Models/Habit.php");
+require_once(__DIR__ . "/../connection/connection.php");
+//require_once(__DIR__ . "/../services/ValidationService.php");
 
 class HabitController
 {
@@ -42,7 +45,7 @@ class HabitController
     }
 
     //Create a new habit
-    public function create()
+    public function createHabit()
     {
         $data = json_decode(file_get_contents("php://input"), true);
 
@@ -56,7 +59,7 @@ class HabitController
     }
 
     //Update a habit
-    public function update()
+    public function updateHabit()
     {
         $id = $_GET['id'] ?? null;
         $data = json_decode(file_get_contents("php://input"), true);
@@ -76,7 +79,7 @@ class HabitController
     }
 
     //Delete a habit
-    public function delete()
+    public function deleteHabit()
     {
         $id = $_GET['id'] ?? null;
 

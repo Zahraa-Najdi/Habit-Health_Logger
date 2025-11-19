@@ -1,16 +1,16 @@
 <?php
-
-require_once(__DIR__ . "/../connection/connection.php");
-require_once(__DIR__ . "/../services/ResponseService.php");
 require_once(__DIR__ . "/../services/EntryService.php");
+require_once(__DIR__ . "/../services/ResponseService.php");
+require_once(__DIR__ . "/../Models/Entry.php");
+require_once(__DIR__ . "/../connection/connection.php");
+//require_once(__DIR__ . "/../services/ValidationService.php");
 
 class EntriesController
 {
     private EntryService $entryService;
 
-    public function __construct()
+    public function __construct(mysqli $connection)
     {
-        global $connection;
         $this->entryService = new EntryService($connection);
     }
 
