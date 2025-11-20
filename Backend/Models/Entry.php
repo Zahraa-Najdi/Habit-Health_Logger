@@ -33,14 +33,64 @@ class Entry extends Model
         $data = $result->fetch_assoc();
         $stmt->close();
 
-        if ($data) {
-            return new Entry($data); 
+        return $data ? new Entry($data) : null;
+    }
+    public static function findByUser(mysqli $connection, int $userId, ?string $startDate = null, ?string $endDate = null): array
+    {
+        $query = "SELECT * FROM entries WHERE user_id = ?";
+        $types = "i";
+        $params = [$userId];
+
+        if ($startDate && $endDate) {
+            $query .= " AND entry_date BETWEEN ? AND ?";
+            $types .= "ss";
+            $params[] = $startDate;
+            $params[] = $endDate;
         }
 
-        return null;
+        $stmt = $connection->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $entries = [];
+        while ($row = $result->fetch_assoc()) {
+            $entries[] = new Entry($row);
+        }
+
+        $stmt->close();
+        return $entries;
     }
 
-    
+    public static function findAll(mysqli $connection, ?string $startDate = null, ?string $endDate = null): array
+    {
+        $query = "SELECT * FROM entries";
+        $types = "";
+        $params = [];
+
+        if ($startDate && $endDate) {
+            $query .= " WHERE entry_date BETWEEN ? AND ?";
+            $types = "ss";
+            $params = [$startDate, $endDate];
+        }
+
+        $stmt = $connection->prepare($query);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $entries = [];
+        while ($row = $result->fetch_assoc()) {
+            $entries[] = new Entry($row);
+        }
+
+        $stmt->close();
+        return $entries;
+    }  
+
     public function getId(): int { return $this->id; }
     public function getUserId(): int { return $this->user_id; }
     public function getEntryDate(): ?string { return $this->entry_date; }
@@ -49,7 +99,6 @@ class Entry extends Model
     public function getRules(): ?string { return $this->rules; }
     public function getCreatedAt(): ?string { return $this->created_at; }
 
-    
     public function setId(int $id): self { $this->id = $id; return $this; }
     public function setUserId(int $user_id): self { $this->user_id = $user_id; return $this; }
     public function setEntryDate(string $entry_date): self { $this->entry_date = $entry_date; return $this; }
@@ -58,7 +107,6 @@ class Entry extends Model
     public function setRules(?string $rules): self { $this->rules = $rules; return $this; }
     public function setCreatedAt(?string $created_at): self { $this->created_at = $created_at; return $this; }
 
-   
     public function toArray(): array
     {
         return [
@@ -75,6 +123,15 @@ class Entry extends Model
     public function __toString()
     {
         return $this->id . " | User: " . $this->user_id . " | Date: " . $this->entry_date;
+    }
+
+    public static function delete(mysqli $connection, int $entryId): bool
+    {
+        $stmt = $connection->prepare("DELETE FROM entries WHERE id = ?");
+        $stmt->bind_param("i", $entryId);
+        $success = $stmt->execute();
+        $stmt->close();
+        return $success;
     }
 }
 ?>

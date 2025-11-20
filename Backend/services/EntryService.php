@@ -14,25 +14,36 @@ class EntryService
 
     public function createEntry(array $data, array $habitValues = []): array
     {
-        if (empty($data["user_id"]) || empty($data["entry_date"])) {
-            return ["status" => 400, "data" => ["error" => "user_id and entry_date are required"]];
-        }
-
-        if (Entry::findByUserAndDate($this->connection, $data["user_id"], $data["entry_date"])) {
-            return ["status" => 409, "data" => ["error" => "Entry already exists for this date"]];
-        }
-
-        $entryId = Entry::create($this->connection, $data);
-        if (!$entryId) {
-            return ["status" => 500, "data" => ["error" => "Failed to create entry"]];
-        }
-
-        foreach ($habitValues as $habitId => $value) {
-            Habit::updateOrCreate($this->connection, $entryId, $habitId, $value, $data["user_id"]);
-        }
-
-        return ["status" => 201, "data" => ["entry_id" => $entryId]];
+    if (empty($data["user_id"]) || empty($data["entry_date"])) {
+        return ["status" => 400, "data" => ["error" => "user_id and entry_date are required"]];
     }
+
+    if (Entry::findByUserAndDate($this->connection, $data["user_id"], $data["entry_date"])) {
+        return ["status" => 409, "data" => ["error" => "Entry already exists for this date"]];
+    }
+
+    if (isset($data['parsed_json']) && is_array($data['parsed_json'])) {
+        $data['parsed_json'] = json_encode($data['parsed_json'], JSON_UNESCAPED_UNICODE);
+    }
+
+    $entryId = Entry::create($this->connection, $data);
+    if (!$entryId) {
+        return ["status" => 500, "data" => ["error" => "Failed to create entry"]];
+    }
+
+    foreach ($habitValues as $habitId => $value) {
+        Habit::updateOrCreate(
+            $this->connection,
+            $entryId,
+            $habitId,
+            $value,
+            $data["user_id"]
+        );
+    }
+
+    return ["status" => 201, "data" => ["entry_id" => $entryId]];
+    }
+
 
     public function getEntries(?int $userId = null, ?string $startDate = null, ?string $endDate = null): array
     {
@@ -93,10 +104,10 @@ class EntryService
             return ["status" => 404, "data" => ["error" => "Entry not found"]];
         }
 
-        Habit::deleteByEntry($this->connection, $entryId);
         Entry::delete($this->connection, $entryId);
 
         return ["status" => 200, "data" => ["message" => "Entry deleted successfully"]];
     }
+
 }
 ?>

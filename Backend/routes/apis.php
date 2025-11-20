@@ -40,7 +40,7 @@ $path = preg_replace('#/+#','/', $path);
 $path = preg_replace('#^.*apis\.php#', '', $path);
 if ($path === '') $path = '/';
 
-echo "ROUTE MATCHED: $path<br>";
+echo "ROUTE MATCHED: $path";
 
 
 if (isset($routes[$path])) {
