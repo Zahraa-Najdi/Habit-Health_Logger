@@ -43,7 +43,7 @@ class UserController
         $data = json_decode(file_get_contents("php://input"), true);
 
         if (!isset($data['email'], $data['password'])) {
-            echo ResponseService::response(400, ['error' => 'Email and password are required']);
+            echo ResponseService::response(400, ['error' => 'Email and/or password is missing']);
             return;
         }
 

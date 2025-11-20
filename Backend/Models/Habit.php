@@ -65,9 +65,10 @@ class Habit extends Model
 
     public static function updateOrCreate(mysqli $connection, int $entryId, int $habitId, $value, int $userId): void
     {
-    
-        $stmt = $connection->prepare("SELECT id FROM habit_entries WHERE entry_id = ? AND habit_id = ?");
-        $stmt->bind_param("ii", $entryId, $habitId);
+        $habitName = "Habit $habitId";
+
+        $stmt = $connection->prepare("SELECT id FROM habit_entries WHERE entry_id = ? AND habit_name = ?");
+        $stmt->bind_param("is", $entryId, $habitName);
         $stmt->execute();
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
@@ -79,12 +80,11 @@ class Habit extends Model
             $stmtUpdate->execute();
             $stmtUpdate->close();
         } else {
-            $stmtInsert = $connection->prepare("INSERT INTO habit_entries (entry_id, habit_id, value, user_id) VALUES (?, ?, ?, ?)");
-            $stmtInsert->bind_param("iidi", $entryId, $habitId, $value, $userId);
+            $stmtInsert = $connection->prepare("INSERT INTO habit_entries (entry_id, habit_name, value, user_id) VALUES (?, ?, ?, ?)");
+            $stmtInsert->bind_param("isdi", $entryId, $habitName, $value, $userId);
             $stmtInsert->execute();
             $stmtInsert->close();
         }
-}
-
+    }
 }
 ?>

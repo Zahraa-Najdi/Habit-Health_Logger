@@ -48,22 +48,25 @@ class EntriesController
 
     public function updateEntry()
     {
-        $id = $_GET['id'] ?? 0;
-        $input = json_decode(file_get_contents("php://input"), true);
+    $input = json_decode(file_get_contents("php://input"), true);
+    $id = $_GET['id'] ?? $input['id'] ?? null;
 
-        if (!$id) {
-            echo ResponseService::response(400, ['error' => 'ID is required']);
-            return;
-        }
-
-        if (!$input) {
-            echo ResponseService::response(400, ['error' => 'Provide data to update']);
-            return;
-        }
-
-        $result = $this->entryService->updateEntry($id, $input);
-        echo ResponseService::response($result['status'], $result['data']);
+    if (!$id) {
+        echo ResponseService::response(400, ['error' => 'ID is required']);
+        return;
     }
+
+    if (!$input) {
+        echo ResponseService::response(400, ['error' => 'Provide data to update']);
+        return;
+    }
+
+    unset($input['id']); // 
+
+    $result = $this->entryService->updateEntry($id, $input);
+    echo ResponseService::response($result['status'], $result['data']);
+    }
+
 
         public function deleteEntry()
     {
